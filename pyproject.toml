@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "basilisp-pyxel"
+version = "0.1.0"
+description = ""
+authors = []
+readme = "README.md"
+packages = [{include = "basilisp_pyxel", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+basilisp = "^0.2.4"
+pyxel = "^2.2.3"
+
+
+[tool.poetry.group.dev.dependencies]
+basilisp-nrepl-async = {git = "https://github.com/ikappaki/basilisp-nrepl-async.git"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

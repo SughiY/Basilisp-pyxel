@@ -1,0 +1,30 @@
+(ns basilisp-pyxel.demo
+  (:require [basilisp-pyxel.nrepl :as nrepl])
+  (:import pyxel))
+
+(defn pyxel_update []
+  (when (pyxel/btnp (.-KEY_Q pyxel))
+    (pyxel/quit)))
+
+(def rect-vec2* (atom {:x 55 :y 41}))
+
+#_(swap! rect-vec2* assoc :x 65)
+#_(swap! rect-vec2* assoc :y 30)
+
+(defn pyxel_draw []
+  (pyxel/cls 0)
+  (pyxel/text  (:x @rect-vec2*) (:y @rect-vec2*)
+               "Hello, Pyxel!"
+               (mod (.-frame_count pyxel) 16)
+               (pyxel/blt 61 66 0 0 0 38 16)))
+
+(defn run []
+  (pyxel/init 160 120 ** :title "Hello Pyxel")
+  (.load (first (.-images pyxel)) 0 0 "assets/pyxel_logo_38x16.png")
+  (pyxel/run pyxel_update pyxel_draw))
+
+;; only start if invoked from the command line.
+(when (= *main-ns* 'basilisp-pyxel.demo)
+  ;; start async nREPL server
+  (nrepl/server-start!)
+  (run))
