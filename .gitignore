@@ -1,0 +1,6 @@
+.clj-kondo
+.lsp
+.calva
+.nrepl-port
+__pycache__/
+.venv/
