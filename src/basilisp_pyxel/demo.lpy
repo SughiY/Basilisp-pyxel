@@ -2,26 +2,65 @@
   (:require [basilisp-pyxel.nrepl :as nrepl])
   (:import pyxel))
 
-(defn pyxel_update []
-  (when (pyxel/btnp (.-KEY_Q pyxel))
-    (pyxel/quit)))
+(defn- create-particle []
+  {:x (+ 62 (pyxel/rndi 0 2))
+   :y (+ 52 (pyxel/rndi 0 5))
+   :radius (pyxel/rndi 0 3)
+   :color 7
+   :life 15})
 
-(def rect-vec2* (atom {:x 55 :y 41}))
+(def particles (atom []))
+(def speed 2)
 
-#_(swap! rect-vec2* assoc :x 65)
-#_(swap! rect-vec2* assoc :y 30)
+(defn development-update []
+  (let [updated-particles (->> @particles
+                               (map (fn [{:keys [y] :as p}]
+                                      (-> p
+                                          (assoc :y (- y (pyxel/rndi 0 speed)))
+                                          (update :life dec))))
+                               (map (fn [{:keys [x life] :as p}]
+                                      (cond
+                                        (and (>= life 7) (< life 13))
+                                        (-> p
+                                            (assoc :color 10)
+                                            (assoc :x (+ x (pyxel/rndi -2 2))))
+                                        (and (>= life 2) (< life 7))
+                                        (-> p
+                                            (assoc :color 9)
+                                            (assoc :x (+ x (pyxel/rndi -1 1))))
+                                        (< life 2)
+                                        (-> p
+                                            (assoc :color 9)
+                                            (assoc :x (+ x (pyxel/rndi -1 1))))
+                                        :else p)))
+                               (filter (fn [{:keys [y life]}]
+                                         (and (> y 0) (> life 0)))))
+        new-particles (if (< (count updated-particles) 100)
+                        (repeatedly 2 create-particle)
+                        [])]
+    (reset! particles (concat updated-particles new-particles))))
 
-(defn pyxel_draw []
+(defn game-update []
+  ;; cooperative multitasking between nREPL server and main loop.
+  (nrepl/server-work-do!)
+  (development-update))
+
+(defn development-draw []
   (pyxel/cls 0)
-  (pyxel/text  (:x @rect-vec2*) (:y @rect-vec2*)
+  (doseq [{:keys [x y radius color]} @particles]
+    (pyxel/circ x y radius color))
+  (pyxel/text  42 41
                "Hello, Pyxel!"
                (mod (.-frame_count pyxel) 16)
-               (pyxel/blt 61 66 0 0 0 38 16)))
+               (pyxel/blt 46 62 0 0 0 38 16)))
+
+(defn game-draw []
+  (development-draw))
 
 (defn run []
-  (pyxel/init 160 120 ** :title "Hello Pyxel")
+  (pyxel/init 128 128 ** :title "Hello Pyxel")
   (.load (first (.-images pyxel)) 0 0 "assets/pyxel_logo_38x16.png")
-  (pyxel/run pyxel_update pyxel_draw))
+  (pyxel/run game-update game-draw))
 
 ;; only start if invoked from the command line.
 (when (= *main-ns* 'basilisp-pyxel.demo)
